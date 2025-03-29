@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  database:
+    image: mariadb:10.5
+    container_name: database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: abc123
+      MYSQL_DATABASE: openSIS
+      MYSQL_USER: openSIS_rw
+      MYSQL_PASSWORD: Op3nS!S
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./opensis-Classic/MYSQL/mysql-init:/docker-entrypoint-initdb.d
+      - ./opensis-Classic/MYSQL/mysql-config/strict_mode.cnf:/etc/mysql/conf.d/strict_mode.cnf
+    networks:
+      - opensis_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+  frontend:
+    build: .
+    image: opensis-frontend
+    container_name: frontend
+    ports:
+      - "8080:80"
+      - "80:80"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - opensis_network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "./rules.yml:/etc/prometheus/rules.yml"
+    networks:
+      - opensis_network
+    ports:
+      - 9090:9090
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    networks:
+      - opensis_network
+    ports:
+      - 9100:9100
+
+  alert-manager:
+    image: prom/alertmanager
+    container_name: alert-manager
+    volumes:
+      - "./alertmanager.yml:/alertmanager/alertmanager.yml"
+    networks:
+      - opensis_network
+    ports:
+      - 9093:9093
+
+  grafana_postgres:
+    container_name: grafana_postgres
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: grafana_db
+      POSTGRES_USER: grafana_usr
+      POSTGRES_PASSWORD: Vagrant
+    volumes:
+      - postgres-storage:/var/lib/postgresql/data
+    networks:
+      - opensis_network
+
+  grafana:
+    image: grafana/grafana-enterprise:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: grafana_postgres
+      GF_DATABASE_NAME: grafana_db
+      GF_DATABASE_USER: grafana_usr
+      GF_DATABASE_PASSWORD: Vagrant
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - opensis_network
+    depends_on:
+      - grafana_postgres
+
+networks:
+  opensis_network:
+    driver: bridge
+
+volumes:
+  db_data:
+  openSIS:
+  grafana-storage:
+  postgres-storage:
