@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.2'
 
 services:
   database:
@@ -20,8 +20,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 5
-      start_period: 10s
-      timeout: 5s
+      timeout: 5s  # Removed 'start_period'
 
   frontend:
     build: .
@@ -31,8 +30,7 @@ services:
       - "8080:80"
       - "80:80"
     depends_on:
-      database:
-        condition: service_healthy
+      - database  # Changed from 'condition: service_healthy'
     networks:
       - opensis_network
 
@@ -95,7 +93,7 @@ services:
     networks:
       - opensis_network
     depends_on:
-      - grafana_postgres
+      - grafana_postgres  # Fixed depends_on
 
 networks:
   opensis_network:
