@@ -38,8 +38,8 @@ services:
     image: prom/prometheus
     container_name: prometheus
     volumes:
-      - "./config/prometheus.yml:/etc/prometheus/prometheus.yml"
-      - "./config/rules.yml:/etc/prometheus/rules.yml"
+      - "./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "./config/rules.yml:/etc/prometheus/rules.yml:ro"
     networks:
       - opensis_network
     ports:
