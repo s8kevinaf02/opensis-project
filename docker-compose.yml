@@ -12,15 +12,15 @@ services:
       MYSQL_PASSWORD: Op3nS!S
     volumes:
       - db_data:/var/lib/mysql
-      - ./opensis-Classic/MYSQL/mysql-init:/docker-entrypoint-initdb.d
-      - ./opensis-Classic/MYSQL/mysql-config/strict_mode.cnf:/etc/mysql/conf.d/strict_mode.cnf
+      - ./openSIS-Classic/MYSQL/mysql-init:/docker-entrypoint-initdb.d
+      - ./openSIS-Classic/MYSQL/mysql-config/strict_mode.cnf:/etc/mysql/conf.d/strict_mode.cnf
     networks:
       - opensis_network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 5
-      timeout: 5s  # Removed 'start_period'
+      timeout: 5s
 
   frontend:
     build: .
@@ -30,7 +30,7 @@ services:
       - "8081:80"
       - "80:80"
     depends_on:
-      - database  # Changed from 'condition: service_healthy'
+      - database
     networks:
       - opensis_network
 
@@ -38,34 +38,33 @@ services:
     image: prom/prometheus
     container_name: prometheus
     volumes:
-      - "./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
-      - "./config/rules.yml:/etc/prometheus/rules.yml:ro"
-    networks:
-      - opensis_network
+      - ./config:/etc/prometheus:ro
     ports:
       - 9090:9090
+    networks:
+      - opensis_network
 
   node-exporter:
     image: prom/node-exporter
     container_name: node-exporter
-    networks:
-      - opensis_network
     ports:
       - 9100:9100
+    networks:
+      - opensis_network
 
   alert-manager:
     image: prom/alertmanager
     container_name: alert-manager
     volumes:
-      - "./alertmanager.yml:/alertmanager/alertmanager.yml"
-    networks:
-      - opensis_network
+      - ./alertmanager.yml:/alertmanager/alertmanager.yml
     ports:
       - 9093:9093
+    networks:
+      - opensis_network
 
   grafana_postgres:
-    container_name: grafana_postgres
     image: postgres:15
+    container_name: grafana_postgres
     restart: always
     environment:
       POSTGRES_DB: grafana_db
@@ -87,13 +86,13 @@ services:
       GF_DATABASE_USER: grafana_usr
       GF_DATABASE_PASSWORD: Vagrant
     ports:
-      - '3000:3000'
+      - "3000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
+    depends_on:
+      - grafana_postgres
     networks:
       - opensis_network
-    depends_on:
-      - grafana_postgres  # Fixed depends_on
 
 networks:
   opensis_network:
@@ -101,6 +100,5 @@ networks:
 
 volumes:
   db_data:
-  openSIS:
   grafana-storage:
   postgres-storage:
