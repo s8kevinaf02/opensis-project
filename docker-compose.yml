@@ -40,7 +40,7 @@ services:
     volumes:
       - ./config:/etc/prometheus:ro
     ports:
-      - 9090:9090
+      - 9091:9090
     networks:
       - opensis_network
 
